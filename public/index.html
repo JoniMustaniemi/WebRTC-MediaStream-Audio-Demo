@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <title>WebRTC: Peer To Peer Audio Demo</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="./css/mainStyle.css" type="text/css" media="all">
+  </link>
+  <script src="./js/lib/adapter.js"></script>
+  <script src="./typescript/RTCShareManager.js"></script>
+</head>
+<body id="body">
+  <script type="module">
+
+        const live_mode_button = document.getElementById("liveModeButton");
+        const audio_mode_button = document.getElementById("audioModeButton");
+        const audio_icon_client_1 = document.getElementById("audioIconClient1");
+        const audio_icon_client_2 = document.getElementById("audioIconClient2");
+        
+        const rtc = new RTCShareManager({
+           event_handlers: {
+              on_live_mode: function(args) {
+                if(args.isLive) {
+                  live_mode_button.classList.add("button-active");
+                } else {
+                  live_mode_button.classList.remove("button-active");
+                  audio_mode_button.classList.add("opacity-0");
+                  audio_mode_button.classList.remove("button-active");
+                  audio_icon_client_1.classList.remove("button-active2");
+                  audio_icon_client_2.classList.remove("button-active2");
+                }
+              },
+            on_audio_mode: function(args) {
+              if(args.audioMode) {
+                audio_mode_button.classList.add("button-active");
+                } else {
+                  audio_mode_button.classList.remove("button-active");
+                  audio_icon_client_1.classList.remove("button-active2");
+                  audio_icon_client_2.classList.remove("button-active2");
+                } 
+          },
+          on_audio_share: function(args) {
+            audio_icon_client_1.classList.add("button-active2");
+          },
+          on_audio_receive: function(args) {
+            audio_icon_client_2.classList.add("button-active2");
+          },
+            on_datachannel_close: function(args) {
+            
+            },
+            on_established_connection: function(args) {
+              audio_mode_button.classList.remove("opacity-0");
+            }
+          }
+          });         
+                    live_mode_button.addEventListener("click", () => rtc.liveMode());
+                    audio_mode_button.addEventListener("click", () => rtc.audioMode());
+
+
+                  
+
+    </script>
+
+
+
+
+  <div class="infoWrapper">
+    <div class="infoHeader">
+      <h1>Instructions</h1>
+    </div>
+    <div class="infoContainer">
+      <p id="firstrule">1. Enter Livemode &lpar;<img src="./livehelp.png"/>&rpar; </p>
+      <p id="secondrule">2. Start Audio Broadcasting &lpar;<img src="./audiohelp.png"/>&rpar;</p>
+    </div>
+  </div>
+
+  <div class="basicButton1 livemode">
+    <button id="liveModeButton"><img src="liveIcon.png" class="shareIcon1" /> </button>
+  </div>
+
+  <div class="basicButton1 audiomode opacity-0" id="audioModeButton">
+    <button><img src="headphones.jpg" class="shareIcon1"/> </button>
+  </div>
+
+  <div id="audioPlayerContainer"></div>
+
+  <!-- ---------------------------------- CLIENT 1 ------------------------------------------------ -->
+  <div class="clientWrapper">
+   
+    <div class="client1">
+      <h1>Client 1 &#8212; Sending audio</h1>
+      <div class="audioIndicator1">
+        <img id="audioIconClient1" src="microphone.png" alt="">
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------------------------- CLIENT 2 ------------------------------------------------ -->
+  <div class="clientWrapper">
+    <div class="client2">
+      <h1>Client 2 &#8212; Receiving audio</h1>
+      <div class="audioIndicator2">
+        <img id="audioIconClient2" src="audioIcon.png" alt="">
+      </div>
+    </div>
+  </div>
+</body>
+</html>
