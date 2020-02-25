@@ -1,4 +1,3 @@
-
 class ConnectionManager {
   private options: any;
 
@@ -50,21 +49,19 @@ class ConnectionManager {
           }
         } else {
           console.log("all candidates sent by client 1");
-      if(this.RTCPeerConnectionObject_client_1.iceConnectionState === "new" && this.RTCPeerConnectionObject_client_2.iceConnectionState === "new") {
-        this.stopLiveMode({
-          restart: true
-        });
-      }
+          if (this.RTCPeerConnectionObject_client_1.iceConnectionState === "new" && this.RTCPeerConnectionObject_client_2.iceConnectionState === "new") {
+            this.stopLiveMode({
+              restart: true
+            });
+          }
         }
       };
-
-     
 
       this.RTCPeerConnectionObject_client_1.onnegotiationneeded = () => {
         if (this.liveModeStatus_client_1 && this.liveModeStatus_client_2) {
           this.createOffer(this.RTCPeerConnectionObject_client_1, "1");
         }
-      } 
+      }
 
       this.RTCPeerConnectionObject_client_1.addEventListener("iceconnectionstatechange", ev => {
         if (this.RTCPeerConnectionObject_client_1) {
@@ -84,7 +81,7 @@ class ConnectionManager {
 
         this.handleDataChannelOpen(event, "1");
       }
-     
+
       this.datachannel.onerror = this.handleDataChannelError;
 
       this.datachannel.onclose = (event) => {
@@ -103,8 +100,6 @@ class ConnectionManager {
         }
       }, false);
 
-  
-
       this.RTCPeerConnectionObject_client_2.onicecandidate = (event) => {
         if (event.candidate) {
           try {
@@ -120,14 +115,12 @@ class ConnectionManager {
 
       this.RTCPeerConnectionObject_client_2.ontrack = (event) => {
         if (typeof this.options.event_handlers.on_audio_receive === 'function') {
-          this.options.event_handlers.on_audio_receive({
-          });
+          this.options.event_handlers.on_audio_receive({});
         }
         this.onReceiveAudio({
-        event: event
+          event: event
         });
       }
-
     }
   }
 
@@ -157,24 +150,18 @@ class ConnectionManager {
     }
   }
 
-
-
   public closeConnection(client: string) {
     if (client == "1") {
-  
       this.RTCPeerConnectionObject_client_1.close();
       this.RTCPeerConnection_client_1 = null;
     } else if (client == "2") {
-
       this.RTCPeerConnectionObject_client_2.close();
       this.RTCPeerConnection_client_2 = null;
     }
     this.checkLivemodeStatuses(this.liveModeStatus_client_1, this.liveModeStatus_client_2);
-
   }
 
   private checkLivemodeStatuses(status_client_1, status_client_2) {
-  
     if (status_client_1 == false || status_client_2 == false) {
       if (typeof this.options.event_handlers.no_live_mode === 'function') {
         this.options.event_handlers.no_live_mode({});
@@ -182,16 +169,13 @@ class ConnectionManager {
     }
   }
 
-
   //sets local description, creates offer and sends it to correct client
   private async createOffer(RTC_object: RTCPeerConnection, client: string) {
-   
     try {
-     
       if (client == "1") {
         this.offer_client_1 = await RTC_object.createOffer();
         var debugOffer = this.offer_client_1;
-      
+
         await RTC_object.setLocalDescription(this.offer_client_1);
         if (RTC_object.signalingState == "have-local-offer") {
           this.setRemote(this.offer_client_1, "offer", this.RTCPeerConnectionObject_client_2);
@@ -200,13 +184,12 @@ class ConnectionManager {
     } catch (error) {
       console.log(error);
     }
-  } 
+  }
 
   //sets remote description based on type (offer or answer)
   //if type is 'answer' completes the handshake and checks if RTCPeerConnection object is connected succesfully
   private async setRemote(sessionDesc: RTCSessionDescriptionInit, type: string, RTC_object: RTCPeerConnection) {
     if (type == "offer") {
-  
       try {
         await RTC_object.setRemoteDescription(sessionDesc);
         this.answer_client_2 = await RTC_object.createAnswer();
@@ -220,13 +203,9 @@ class ConnectionManager {
       }
     } else if (type == "answer") {
       try {
-  
         await RTC_object.setRemoteDescription(sessionDesc);
-
-     
       } catch (error) {
         console.log(error);
-
       }
     }
   }
@@ -249,51 +228,45 @@ class Connection {
 }
 
 class RTCShareManager {
-
   private liveModeStatus_client_1: boolean = false;
   private liveModeStatus_client_2: boolean = false;
   private audioStatus: boolean = false;
   private conMan: ConnectionManager;
-  private audioSharing : AudioSharing;
+  private audioSharing: AudioSharing;
   private options: any;
 
   constructor(options: any) {
-
     this.options = options;
     this.conMan = new ConnectionManager(
       options
     );
 
-    
     this.conMan.stopLiveMode = (args: any) => {
       this.stopLiveMode(null, args.restart);
     }
 
-    this.conMan.onReceiveAudio = (args:any) => {
-    this.audioSharing.receiveMedia(args.event);
+    this.conMan.onReceiveAudio = (args: any) => {
+      this.audioSharing.receiveMedia(args.event);
+    }
+  }
+
+  public audioMode() {
+    if (typeof this.options.event_handlers.on_audio_mode === 'function') {
+      this.options.event_handlers.on_audio_mode({
+        audioMode: !this.audioStatus
+      });
     }
 
+    if (!this.audioStatus) {
+      this.audioStatus = true;
+      console.log("Audiomode is on");
+      this.audioSharing = new AudioSharing(this.conMan.RTCPeerConnectionObject_client_1, this.conMan.RTCPeerConnectionObject_client_2, this.options);
+    } else {
+      this.audioStatus = false;
+      console.log("Audiomode is off");
+      this.audioSharing.stopMediaSharing();
+    }
   }
-
-
-
- public audioMode() {
-  if (typeof this.options.event_handlers.on_audio_mode === 'function') {
-    this.options.event_handlers.on_audio_mode({
-      audioMode: !this.audioStatus
-    });
-  }
-
-  if (!this.audioStatus) {
-    this.audioStatus = true;
-    console.log("Audiomode is on");
-    this.audioSharing = new AudioSharing(this.conMan.RTCPeerConnectionObject_client_1, this.conMan.RTCPeerConnectionObject_client_2, this.options);
-  } else {
-    this.audioStatus = false;
-    console.log("Audiomode is off");
-    this.audioSharing.stopMediaSharing();
-  }
- }
 
   public liveMode() {
     if (typeof this.options.event_handlers.on_live_mode === 'function') {
@@ -314,9 +287,8 @@ class RTCShareManager {
   }
 
 
-  private stopLiveMode(client?: string, restart?: boolean) {
+  private stopLiveMode(client ? : string, restart ? : boolean) {
     if (client == "1") {
-   
       this.liveModeStatus_client_1 = false;
       this.conMan.liveModeStatus_client_1 = false;
       if (this.conMan.RTCPeerConnection_client_1) {
@@ -333,7 +305,7 @@ class RTCShareManager {
         this.conMan.RTCPeerConnection_client_2 = undefined;
       }
       return;
-    } else if(restart !== undefined) {
+    } else if (restart !== undefined) {
       this.liveModeStatus_client_1 = false;
       this.liveModeStatus_client_2 = false;
       this.conMan.RTCPeerConnection_client_1 = null;
@@ -341,7 +313,6 @@ class RTCShareManager {
       this.conMan.RTCPeerConnectionObject_client_1 = null;
       this.conMan.RTCPeerConnectionObject_client_2 = null;
       this.conMan.datachannel = null;
-
       this.liveModeStatus_client_1 = true;
       this.liveModeStatus_client_2 = true;
       this.conMan.startConnection(this.liveModeStatus_client_1, "1");
@@ -351,18 +322,17 @@ class RTCShareManager {
 }
 
 class AudioSharing {
-
   private options: any;
   private mediaDevice: MediaStream;
   private audioTracks: MediaStreamTrack[];
   private RTC_object_1: RTCPeerConnection;
   private RTC_object_2: RTCPeerConnection;
-  
+
   private audioConstraints: MediaStreamConstraints = {
     audio: true
   };
 
-  constructor(client1:RTCPeerConnection, client2:RTCPeerConnection, options?:any) {
+  constructor(client1: RTCPeerConnection, client2: RTCPeerConnection, options ? : any) {
     this.options = options;
     this.RTC_object_1 = client1;
     this.RTC_object_2 = client2;
@@ -371,42 +341,32 @@ class AudioSharing {
 
   //asks access to user microphone and adds audiotracks to correct RTCPeerConnection
   private async getMedia() {
-    navigator.mediaDevices.getUserMedia(this.audioConstraints).then((stream:MediaStream) => {
+    navigator.mediaDevices.getUserMedia(this.audioConstraints).then((stream: MediaStream) => {
       this.mediaDevice = stream;
       this.audioTracks = this.mediaDevice.getAudioTracks();
       console.log("Using Audio device: " + this.audioTracks[0].label);
-    
       if (typeof this.options.event_handlers.on_audio_share === 'function') {
-        this.options.event_handlers.on_audio_share({
-        });
+        this.options.event_handlers.on_audio_share({});
       }
       this.attachTrackToConnection();
-
     });
   }
 
-
   private attachTrackToConnection() {
-   
-   for (const track of this.audioTracks) {
+    for (const track of this.audioTracks) {
+      this.RTC_object_1.addTrack(track);
+    }
+  }
 
-       this.RTC_object_1.addTrack(track);     
-   }
-
-  }  
-
-  // connections: Connection[]
+ 
   public stopMediaSharing() {
-   let tracks = this.mediaDevice.getAudioTracks();
+    let tracks = this.mediaDevice.getAudioTracks();
     tracks.forEach(track => {
       track.stop();
     });
   }
 
-
-  public receiveMedia(event:MediaStreamTrackEvent) {
-  
-   
+  public receiveMedia(event: MediaStreamTrackEvent) {
     let inboundStream = null;
     let audioPlayer: HTMLAudioElement = < HTMLAudioElement > document.createElement("AUDIO");
     audioPlayer.setAttribute("autoplay", "");
@@ -414,9 +374,7 @@ class AudioSharing {
     if (!inboundStream) {
       inboundStream = new MediaStream();
       audioPlayer.srcObject = inboundStream;
-    } 
-      inboundStream.addTrack(event.track);
-    
-
+    }
+    inboundStream.addTrack(event.track);
   }
 }
