@@ -14,7 +14,8 @@
   <script type="module">
 
         const live_mode_button = document.getElementById("liveModeButton");
-        const audio_mode_button = document.getElementById("audioModeButton");
+        const audio_mode_button = document.getElementById("audioButton");
+        const audio_mode_button_container = document.getElementById("audioModeButtonContainer");
         const audio_icon_client_1 = document.getElementById("audioIconClient1");
         const audio_icon_client_2 = document.getElementById("audioIconClient2");
         
@@ -25,8 +26,8 @@
                   live_mode_button.classList.add("button-active");
                 } else {
                   live_mode_button.classList.remove("button-active");
-                  audio_mode_button.classList.add("opacity-0");
-                  audio_mode_button.classList.remove("button-active");
+                  audio_mode_button_container.classList.add("opacity-0");
+                  audio_mode_button_container.classList.remove("button-active");
                   audio_icon_client_1.classList.remove("button-active2");
                   audio_icon_client_2.classList.remove("button-active2");
                 }
@@ -35,7 +36,7 @@
               if(args.audioMode) {
                 audio_mode_button.classList.add("button-active");
                 } else {
-                  audio_mode_button.classList.remove("button-active");
+                  audio_mode_button_container.classList.remove("button-active");
                   audio_icon_client_1.classList.remove("button-active2");
                   audio_icon_client_2.classList.remove("button-active2");
                 } 
@@ -50,15 +51,13 @@
             
             },
             on_established_connection: function(args) {
-              audio_mode_button.classList.remove("opacity-0");
+              audio_mode_button_container.classList.remove("opacity-0");
             }
           }
           });         
                     live_mode_button.addEventListener("click", () => rtc.liveMode());
                     audio_mode_button.addEventListener("click", () => rtc.audioMode());
 
-
-                  
 
     </script>
 
@@ -79,8 +78,8 @@
     <button id="liveModeButton"><img src="liveIcon.png" class="shareIcon1" /> </button>
   </div>
 
-  <div class="basicButton1 audiomode opacity-0" id="audioModeButton">
-    <button><img src="headphones.jpg" class="shareIcon1"/> </button>
+  <div class="basicButton1 audiomode opacity-0" id="audioModeButtonContainer">
+    <button id="audioButton"><img src="headphones.jpg" class="shareIcon1"/> </button>
   </div>
 
   <div id="audioPlayerContainer"></div>
