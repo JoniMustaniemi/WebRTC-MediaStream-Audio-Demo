@@ -12,11 +12,13 @@ class ConnectionManager {
   private answer_client_2: RTCSessionDescriptionInit;
   public stopLiveMode: Function;
   public onReceiveAudio: Function;
-
+  
+  //creates reference for UI element handling
   constructor(options: any) {
     this.options = options;
   }
-
+  
+  //initializes RTCPeerConnection objects and sets appropriate eveten handlers for each client
   public startConnection(liveModeStatus: boolean, client: string) {
     if (client == "1") {
       this.liveModeStatus_client_1 = liveModeStatus;
@@ -56,13 +58,15 @@ class ConnectionManager {
           }
         }
       };
-
+    
+      //when negotiation is needed starts connection handshake procedure
       this.RTCPeerConnectionObject_client_1.onnegotiationneeded = () => {
         if (this.liveModeStatus_client_1 && this.liveModeStatus_client_2) {
           this.createOffer(this.RTCPeerConnectionObject_client_1, "1");
         }
       }
 
+      //listens RTCPeerConnection objects for connection state changes and makes appropriate actions
       this.RTCPeerConnectionObject_client_1.addEventListener("iceconnectionstatechange", ev => {
         if (this.RTCPeerConnectionObject_client_1) {
           if (this.RTCPeerConnectionObject_client_1.iceConnectionState === "disconnected") {
@@ -77,6 +81,8 @@ class ConnectionManager {
           }
         }
       }, false);
+      
+      //listens datachannel for various events and takes appropriate action
       this.datachannel.onopen = (event) => {
         this.handleDataChannelOpen(event, "1");
       }
@@ -96,7 +102,8 @@ class ConnectionManager {
           }
         }
       }, false);
-
+      
+      //When IceCandidate is found adds it to the other client
       this.RTCPeerConnectionObject_client_2.onicecandidate = (event) => {
         if (event.candidate) {
           try {
@@ -109,7 +116,8 @@ class ConnectionManager {
           console.log("all candidates sent by client 2");
         }
       };
-
+      
+      //when track is received delivers track event information to RTCShareManager and updates UI elements
       this.RTCPeerConnectionObject_client_2.ontrack = (event) => {
         if (typeof this.options.event_handlers.on_audio_receive === 'function') {
           this.options.event_handlers.on_audio_receive({});
@@ -157,7 +165,8 @@ class ConnectionManager {
     }
     this.checkLivemodeStatuses(this.liveModeStatus_client_1, this.liveModeStatus_client_2);
   }
-
+  
+// handles updating UI elements when neither client is in livemode because connection objects were terminated
   private checkLivemodeStatuses(status_client_1, status_client_2) {
     if (status_client_1 == false || status_client_2 == false) {
       if (typeof this.options.event_handlers.no_live_mode === 'function') {
@@ -166,12 +175,14 @@ class ConnectionManager {
     }
   }
 
+  //creates SDP offer for the purpose of starting a new WebRTC connection with another client
   private async createOffer(RTC_object: RTCPeerConnection, client: string) {
     try {
       if (client == "1") {
         this.offer_client_1 = await RTC_object.createOffer();
         await RTC_object.setLocalDescription(this.offer_client_1);
         if (RTC_object.signalingState == "have-local-offer") {
+          //sets another clients SDP offer to remote end of connection
           this.setRemote(this.offer_client_1, "offer", this.RTCPeerConnectionObject_client_2);
         }
       }
@@ -180,13 +191,14 @@ class ConnectionManager {
     }
   }
 
+  
   private async setRemote(sessionDesc: RTCSessionDescriptionInit, type: string, RTC_object: RTCPeerConnection) {
     if (type == "offer") {
       try {
         await RTC_object.setRemoteDescription(sessionDesc);
+        //creates an SDP answer to an offer received from another client
         this.answer_client_2 = await RTC_object.createAnswer();
         await RTC_object.setLocalDescription(this.answer_client_2);
-        //todo: move remote and local handling to connection class
         if (RTC_object.signalingState == "stable") {
           this.setRemote(this.answer_client_2, "answer", this.RTCPeerConnectionObject_client_1);
         }
@@ -233,22 +245,24 @@ class RTCShareManager {
       options
     );
 
+    //if WebRTC connection fails, initializes restart functionality
     this.conMan.stopLiveMode = (args: any) => {
       this.stopLiveMode(null, args.restart);
     }
-
+    
     this.conMan.onReceiveAudio = (args: any) => {
       this.audioSharing.receiveMedia(args.event);
     }
   }
 
+  //handles audiomode functionality. updates UI elements and initializes new AudioSharing instance or stops audiotracks if audiomode is turned off
   public audioMode() {
     if (typeof this.options.event_handlers.on_audio_mode === 'function') {
       this.options.event_handlers.on_audio_mode({
         audioMode: !this.audioStatus
       });
     }
-
+    
     if (!this.audioStatus) {
       this.audioStatus = true;
       console.log("Audiomode is on");
@@ -260,6 +274,7 @@ class RTCShareManager {
     }
   }
 
+  //handles livemode functionality. initializes connection sequences and is responsible for ending connection if livemode is turned off 
   public liveMode() {
     if (typeof this.options.event_handlers.on_live_mode === 'function') {
       this.options.event_handlers.on_live_mode({
@@ -331,6 +346,7 @@ class AudioSharing {
     this.getMedia();
   }
 
+  //get access to user microphone, add tracks to RTCPeerConnection object and update UI elements
   private async getMedia() {
     navigator.mediaDevices.getUserMedia(this.audioConstraints).then((stream: MediaStream) => {
       this.mediaDevice = stream;
@@ -356,7 +372,8 @@ class AudioSharing {
       track.stop();
     });
   }
-
+  
+  //create new mediastream object for received audio track and attach stream to HTML audio element
   public receiveMedia(event: MediaStreamTrackEvent) {
     let inboundStream = null;
     let audioPlayer: HTMLAudioElement = < HTMLAudioElement > document.createElement("AUDIO");
