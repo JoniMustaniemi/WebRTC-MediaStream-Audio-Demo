@@ -78,12 +78,9 @@ class ConnectionManager {
         }
       }, false);
       this.datachannel.onopen = (event) => {
-
         this.handleDataChannelOpen(event, "1");
       }
-
       this.datachannel.onerror = this.handleDataChannelError;
-
       this.datachannel.onclose = (event) => {
         this.handleDataChannelClose();
       }
@@ -169,13 +166,10 @@ class ConnectionManager {
     }
   }
 
-  //sets local description, creates offer and sends it to correct client
   private async createOffer(RTC_object: RTCPeerConnection, client: string) {
     try {
       if (client == "1") {
         this.offer_client_1 = await RTC_object.createOffer();
-        var debugOffer = this.offer_client_1;
-
         await RTC_object.setLocalDescription(this.offer_client_1);
         if (RTC_object.signalingState == "have-local-offer") {
           this.setRemote(this.offer_client_1, "offer", this.RTCPeerConnectionObject_client_2);
@@ -186,8 +180,6 @@ class ConnectionManager {
     }
   }
 
-  //sets remote description based on type (offer or answer)
-  //if type is 'answer' completes the handshake and checks if RTCPeerConnection object is connected succesfully
   private async setRemote(sessionDesc: RTCSessionDescriptionInit, type: string, RTC_object: RTCPeerConnection) {
     if (type == "offer") {
       try {
@@ -339,7 +331,6 @@ class AudioSharing {
     this.getMedia();
   }
 
-  //asks access to user microphone and adds audiotracks to correct RTCPeerConnection
   private async getMedia() {
     navigator.mediaDevices.getUserMedia(this.audioConstraints).then((stream: MediaStream) => {
       this.mediaDevice = stream;
