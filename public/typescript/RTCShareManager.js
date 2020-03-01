@@ -183,7 +183,7 @@ var ConnectionManager = /** @class */ (function () {
             }
         }
     };
-    //sets local description, creates offer and sends it to correct client
+    
     ConnectionManager.prototype.createOffer = function (RTC_object, client) {
         return __awaiter(this, void 0, void 0, function () {
             var _a, debugOffer, error_1;
@@ -214,8 +214,7 @@ var ConnectionManager = /** @class */ (function () {
             });
         });
     };
-    //sets remote description based on type (offer or answer)
-    //if type is 'answer' completes the handshake and checks if RTCPeerConnection object is connected succesfully
+   
     ConnectionManager.prototype.setRemote = function (sessionDesc, type, RTC_object) {
         return __awaiter(this, void 0, void 0, function () {
             var _a, error_2, error_3;
@@ -236,7 +235,6 @@ var ConnectionManager = /** @class */ (function () {
                         return [4 /*yield*/, RTC_object.setLocalDescription(this.answer_client_2)];
                     case 4:
                         _b.sent();
-                        //todo: move remote and local handling to connection class
                         if (RTC_object.signalingState == "stable") {
                             this.setRemote(this.answer_client_2, "answer", this.RTCPeerConnectionObject_client_1);
                         }
@@ -370,7 +368,7 @@ var AudioSharing = /** @class */ (function () {
         this.RTC_object_2 = client2;
         this.getMedia();
     }
-    //asks access to user microphone and adds audiotracks to correct RTCPeerConnection
+    
     AudioSharing.prototype.getMedia = function () {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
@@ -394,7 +392,7 @@ var AudioSharing = /** @class */ (function () {
             this.RTC_object_1.addTrack(track);
         }
     };
-    // connections: Connection[]
+
     AudioSharing.prototype.stopMediaSharing = function () {
         var tracks = this.mediaDevice.getAudioTracks();
         tracks.forEach(function (track) {
